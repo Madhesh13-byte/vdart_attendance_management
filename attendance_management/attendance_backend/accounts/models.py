@@ -18,7 +18,7 @@ class User(AbstractUser):
     is_active = models.BooleanField(default=True)
     
     class Meta:
-        unique_together = [['employee_id', 'organization']]
+        unique_together = [['employee_id', 'organization'], ['username', 'organization']]
     
     def __str__(self):
         return f"{self.username} - {self.get_role_display()}"

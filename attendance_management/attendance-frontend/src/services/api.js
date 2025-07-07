@@ -53,6 +53,8 @@ export const authAPI = {
   updateProfile: (data) => api.patch('/auth/profile/update/', data),
   createUser: (userData) => api.post('/auth/create-user/', userData),
   getUsers: () => api.get('/auth/users/'),
+  getEmployees: () => api.get('/auth/employees/'),
+  createEmployee: (userData) => api.post('/auth/create-user/', userData),
 };
 
 export const attendanceAPI = {

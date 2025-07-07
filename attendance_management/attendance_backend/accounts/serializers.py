@@ -25,7 +25,11 @@ class UserCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.pop('password')
         validated_data.setdefault('role', 'employee')
-        organization = self.context['request'].user.organization if 'request' in self.context and hasattr(self.context['request'].user, 'organization') else None
+        
+        # Get organization from request context
+        request = self.context.get('request')
+        organization = request.user.organization if request and request.user.organization else None
+        
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
@@ -39,6 +43,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
             date_joined_company=validated_data.get('date_joined_company'),
             organization=organization
         )
+        print(f"[DEBUG] Created user: {user.username}, org: {user.organization}")
         return user
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):

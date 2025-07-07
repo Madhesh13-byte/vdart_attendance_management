@@ -45,18 +45,7 @@ class ProfileUpdateView(generics.UpdateAPIView):
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def user_list(request):
-    if request.user.role != 'admin':
-        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
-    
-    if not request.user.organization:
-        return Response({'error': 'No organization assigned'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    users = User.objects.filter(
-        role='employee', 
-        organization=request.user.organization,
-        is_active=True
-    )
-    print(f"[DEBUG] user_list for org={request.user.organization}: {[u.username for u in users]}")
+    users = User.objects.all()
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data)
 

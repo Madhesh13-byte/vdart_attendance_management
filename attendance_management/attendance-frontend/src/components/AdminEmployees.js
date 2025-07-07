@@ -4,13 +4,7 @@ import toast from 'react-hot-toast';
 
 const AdminEmployees = () => {
   const [employees, setEmployees] = useState([]);
-  const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [filters, setFilters] = useState({
-    project: '',
-    designation: '',
-    status: ''
-  });
   const [newEmployee, setNewEmployee] = useState({
     username: '',
     email: '',
@@ -27,41 +21,15 @@ const AdminEmployees = () => {
     fetchEmployees();
   }, []);
 
-  useEffect(() => {
-    filterEmployees();
-  }, [employees, filters]);
-
   const fetchEmployees = async () => {
     try {
       const response = await authAPI.getUsers();
-      setEmployees(response.data);
+      console.log('API Response:', response.data);
+      setEmployees(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
-      toast.error('Failed to fetch employees');
+      console.error('Error fetching employees:', error);
+      setEmployees([]);
     }
-  };
-
-  const filterEmployees = () => {
-    let filtered = employees;
-    
-    if (filters.project) {
-      filtered = filtered.filter(emp => emp.project === filters.project);
-    }
-    if (filters.designation) {
-      filtered = filtered.filter(emp => emp.designation === filters.designation);
-    }
-    if (filters.status) {
-      filtered = filtered.filter(emp => filters.status === 'active' ? emp.is_active : !emp.is_active);
-    }
-    
-    setFilteredEmployees(filtered);
-  };
-
-  const getUniqueProjects = () => {
-    return [...new Set(employees.filter(emp => emp.project).map(emp => emp.project))];
-  };
-
-  const getUniqueDesignations = () => {
-    return [...new Set(employees.filter(emp => emp.designation).map(emp => emp.designation))];
   };
 
   const handleCreateEmployee = async (e) => {
@@ -87,11 +55,7 @@ const AdminEmployees = () => {
       });
       fetchEmployees();
     } catch (error) {
-      const errorMsg = error.response?.data?.username?.[0] || 
-                      error.response?.data?.email?.[0] || 
-                      error.response?.data?.employee_id?.[0] || 
-                      'Failed to create employee';
-      toast.error(errorMsg);
+      toast.error('Failed to create employee');
     }
   };
 
@@ -99,51 +63,31 @@ const AdminEmployees = () => {
     <div className="container">
       <div className="card">
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
-          <h1 className="text-2xl font-bold" style={{color: '#111827'}}>Employee Management</h1>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="btn btn-primary"
-          >
-            Create New Employee
-          </button>
-        </div>
-
-        {/* Filters */}
-        <div style={{display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap'}}>
-          <select
-            value={filters.project}
-            onChange={(e) => setFilters({...filters, project: e.target.value})}
-            style={{padding: '6px 12px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '14px'}}
-          >
-            <option value="">All Projects</option>
-            {getUniqueProjects().map(project => (
-              <option key={project} value={project}>{project}</option>
-            ))}
-          </select>
-          <select
-            value={filters.designation}
-            onChange={(e) => setFilters({...filters, designation: e.target.value})}
-            style={{padding: '6px 12px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '14px'}}
-          >
-            <option value="">All Designations</option>
-            {getUniqueDesignations().map(designation => (
-              <option key={designation} value={designation}>{designation}</option>
-            ))}
-          </select>
-          <select
-            value={filters.status}
-            onChange={(e) => setFilters({...filters, status: e.target.value})}
-            style={{padding: '6px 12px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '14px'}}
-          >
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+          <div>
+            <h1 className="text-2xl font-bold" style={{color: '#111827'}}>Employee Management</h1>
+            <p style={{color: '#6b7280', fontSize: '14px', margin: '4px 0 0 0'}}>
+              {employees.length} employees found
+            </p>
+          </div>
+          <div style={{display: 'flex', gap: '12px'}}>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="btn btn-primary"
+            >
+              Create New Employee
+            </button>
+            <button
+              onClick={fetchEmployees}
+              className="btn btn-success"
+            >
+              Refresh List
+            </button>
+          </div>
         </div>
 
         {/* Employee List */}
         <div style={{maxHeight: '500px', overflowY: 'auto'}}>
-          {filteredEmployees.map((employee) => (
+          {employees.map((employee) => (
             <div key={employee.id} style={{
               border: '1px solid #e5e7eb',
               borderRadius: '6px',
@@ -161,6 +105,10 @@ const AdminEmployees = () => {
                     <p style={{margin: 0, fontSize: '13px', fontWeight: '500'}}>{employee.project || 'No Project'}</p>
                     <p style={{margin: 0, fontSize: '12px', color: '#6b7280'}}>{employee.designation || 'N/A'}</p>
                   </div>
+                  <div style={{minWidth: '120px'}}>
+                    <p style={{margin: 0, fontSize: '12px', color: '#6b7280'}}>Organization</p>
+                    <p style={{margin: 0, fontSize: '13px', fontWeight: '500'}}>{employee.organization_name || 'N/A'}</p>
+                  </div>
                   <div style={{minWidth: '80px'}}>
                     <span style={{
                       padding: '2px 8px',
@@ -176,6 +124,11 @@ const AdminEmployees = () => {
               </div>
             </div>
           ))}
+          {employees.length === 0 && (
+            <div style={{textAlign: 'center', padding: '40px', color: '#6b7280'}}>
+              <p>No employees found. Create your first employee to get started.</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -194,13 +147,12 @@ const AdminEmployees = () => {
           zIndex: 1000
         }}>
           <div className="card" style={{width: '500px', maxHeight: '80vh', overflow: 'auto'}}>
-            <h2 className="text-2xl font-bold mb-4" style={{color: '#111827'}}>Create New Employee</h2>
+            <h2>Create New Employee</h2>
             <form onSubmit={handleCreateEmployee}>
               <div style={{marginBottom: '16px'}}>
-                <label style={{display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500'}}>Employee ID *</label>
+                <label>Employee ID *</label>
                 <input
                   type="text"
-                  placeholder="EMP001"
                   className="form-input"
                   value={newEmployee.employee_id}
                   onChange={(e) => setNewEmployee({...newEmployee, employee_id: e.target.value})}
@@ -208,61 +160,54 @@ const AdminEmployees = () => {
                 />
               </div>
               
-              <div className="grid grid-cols-2" style={{gap: '16px', marginBottom: '16px'}}>
-                <div>
-                  <label style={{display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500'}}>Username *</label>
-                  <input
-                    type="text"
-                    placeholder="john.doe"
-                    className="form-input"
-                    value={newEmployee.username}
-                    onChange={(e) => setNewEmployee({...newEmployee, username: e.target.value})}
-                    required
-                  />
-                </div>
-                <div>
-                  <label style={{display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500'}}>Default Password *</label>
-                  <input
-                    type="password"
-                    placeholder="Temporary password"
-                    className="form-input"
-                    value={newEmployee.password}
-                    onChange={(e) => setNewEmployee({...newEmployee, password: e.target.value})}
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2" style={{gap: '16px', marginBottom: '16px'}}>
-                <div>
-                  <label style={{display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500'}}>First Name *</label>
-                  <input
-                    type="text"
-                    placeholder="John"
-                    className="form-input"
-                    value={newEmployee.first_name}
-                    onChange={(e) => setNewEmployee({...newEmployee, first_name: e.target.value})}
-                    required
-                  />
-                </div>
-                <div>
-                  <label style={{display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500'}}>Last Name *</label>
-                  <input
-                    type="text"
-                    placeholder="Doe"
-                    className="form-input"
-                    value={newEmployee.last_name}
-                    onChange={(e) => setNewEmployee({...newEmployee, last_name: e.target.value})}
-                    required
-                  />
-                </div>
+              <div style={{marginBottom: '16px'}}>
+                <label>Username *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={newEmployee.username}
+                  onChange={(e) => setNewEmployee({...newEmployee, username: e.target.value})}
+                  required
+                />
               </div>
               
               <div style={{marginBottom: '16px'}}>
-                <label style={{display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500'}}>Email Address *</label>
+                <label>Password *</label>
+                <input
+                  type="password"
+                  className="form-input"
+                  value={newEmployee.password}
+                  onChange={(e) => setNewEmployee({...newEmployee, password: e.target.value})}
+                  required
+                />
+              </div>
+              
+              <div style={{marginBottom: '16px'}}>
+                <label>First Name *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={newEmployee.first_name}
+                  onChange={(e) => setNewEmployee({...newEmployee, first_name: e.target.value})}
+                  required
+                />
+              </div>
+              
+              <div style={{marginBottom: '16px'}}>
+                <label>Last Name *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={newEmployee.last_name}
+                  onChange={(e) => setNewEmployee({...newEmployee, last_name: e.target.value})}
+                  required
+                />
+              </div>
+              
+              <div style={{marginBottom: '16px'}}>
+                <label>Email *</label>
                 <input
                   type="email"
-                  placeholder="john.doe@company.com"
                   className="form-input"
                   value={newEmployee.email}
                   onChange={(e) => setNewEmployee({...newEmployee, email: e.target.value})}
@@ -270,37 +215,23 @@ const AdminEmployees = () => {
                 />
               </div>
               
-              <div className="grid grid-cols-2" style={{gap: '16px', marginBottom: '16px'}}>
-                <div>
-                  <label style={{display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500'}}>Project</label>
-                  <input
-                    type="text"
-                    placeholder="Project Alpha"
-                    className="form-input"
-                    value={newEmployee.project}
-                    onChange={(e) => setNewEmployee({...newEmployee, project: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <label style={{display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500'}}>Job Title</label>
-                  <input
-                    type="text"
-                    placeholder="Software Developer"
-                    className="form-input"
-                    value={newEmployee.designation}
-                    onChange={(e) => setNewEmployee({...newEmployee, designation: e.target.value})}
-                  />
-                </div>
+              <div style={{marginBottom: '16px'}}>
+                <label>Project</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={newEmployee.project}
+                  onChange={(e) => setNewEmployee({...newEmployee, project: e.target.value})}
+                />
               </div>
               
               <div style={{marginBottom: '16px'}}>
-                <label style={{display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500'}}>Date Joined</label>
+                <label>Designation</label>
                 <input
-                  type="date"
+                  type="text"
                   className="form-input"
-                  value={newEmployee.date_joined_company}
-                  onChange={(e) => setNewEmployee({...newEmployee, date_joined_company: e.target.value})}
-                  style={{width: '50%'}}
+                  value={newEmployee.designation}
+                  onChange={(e) => setNewEmployee({...newEmployee, designation: e.target.value})}
                 />
               </div>
               

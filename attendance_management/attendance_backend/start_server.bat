@@ -1,0 +1,6 @@
+@echo off
+echo Checking database setup...
+python setup_db.py
+if %errorlevel% neq 0 exit /b %errorlevel%
+echo Starting Django server...
+python manage.py runserver

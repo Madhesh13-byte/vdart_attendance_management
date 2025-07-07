@@ -198,10 +198,10 @@ const Dashboard = () => {
               borderRadius: '20px',
               fontSize: '14px',
               fontWeight: '500',
-              backgroundColor: todayAttendance?.is_present ? '#d1fae5' : '#f3f4f6',
-              color: todayAttendance?.is_present ? '#065f46' : '#374151'
+              backgroundColor: (todayAttendance?.clock_in && !todayAttendance?.clock_out) ? '#d1fae5' : '#f3f4f6',
+              color: (todayAttendance?.clock_in && !todayAttendance?.clock_out) ? '#065f46' : '#374151'
             }}>
-              {todayAttendance?.is_present ? 'Present' : 'Absent'}
+              {(todayAttendance?.clock_in && !todayAttendance?.clock_out) ? 'Active' : 'Inactive'}
             </div>
           </div>
         </div>
